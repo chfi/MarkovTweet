@@ -1,0 +1,16 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+    @model IList<string>
+}
+
+@foreach (var tweet in Model)
+{
+    <div class="row">
+        <div class="col-lg-2">
+            @ViewData["Screenname"]
+        </div>
+        <div class="col-lg-10">
+            @tweet
+        </div>
+    </div>
+}
