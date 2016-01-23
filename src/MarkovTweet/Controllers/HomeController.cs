@@ -23,11 +23,15 @@ namespace MarkovTweet.Controllers
 
         public IActionResult Index(string screenname, string order)
         {
+            // TODO handle hashtags separately
             int markovOrder;
             // default order is 2, if the parse failed
             if (!int.TryParse(order, out markovOrder))
                 markovOrder = 2;
 
+            // hack to avoid null pointer exception
+            if (markovOrder > 5)
+                markovOrder = 5;
             int tweetCount = 200;
             var generator = new MarkovGenerator(markovOrder);
 

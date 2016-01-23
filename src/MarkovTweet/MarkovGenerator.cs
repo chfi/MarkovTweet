@@ -7,6 +7,8 @@ namespace MarkovTweet
 {
     class MarkovGenerator
     {
+        // TODO make prefixes case insensitive, or at least add an option for it
+
         // the size of the prefix
         private int order;
         // A prefix is a set of n words, where n = the order of the generator.
@@ -86,6 +88,7 @@ namespace MarkovTweet
             {
                 throw new ArgumentException("Prefix is of wrong size: Markov chain is order " + order + ", prefix length is " + prefix.Count);
             }
+            // TODO fix null pointer exception occasionally thrown here
             var curPrefix = prefixes[prefix];
 
             int index = rng.Next(curPrefix.Count);
