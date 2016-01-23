@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNet.Builder;
+﻿using Microsoft.AspNet.Builder;
 using Microsoft.AspNet.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,7 +12,6 @@ namespace MarkovTweet
         {
             // Set up configuration sources.
             var builder = new ConfigurationBuilder()
-                .AddUserSecrets()
                 .AddJsonFile("appsettings.json")
                 .AddEnvironmentVariables();
 
@@ -24,6 +19,7 @@ namespace MarkovTweet
             {
                 // This will push telemetry data through Application Insights pipeline faster, allowing you to view results immediately.
                 builder.AddApplicationInsightsSettings(developerMode: true);
+                builder.AddUserSecrets();
             }
             Configuration = builder.Build();
         }
@@ -67,16 +63,13 @@ namespace MarkovTweet
 
             app.UseMvc(routes =>
             {
-                /*
-                routes.MapRoute(
-                    name: "default",
-                    template: "{controller=Home}/{action=Index}/{screenname?}");
-                    */
-
                 routes.MapRoute(
                     name: "generate",
-                    template: "{screenname}",
-                    defaults: new {controller = "Home", action = "Index", screenname = "realDonaldTrump"});
+                    template: "{screenname}/{order}",
+                    defaults: new { controller = "Home"
+                                  , action = "Index"
+                                  , screenname = "realDonaldTrump"
+                                  , order = "2"});
             });
         }
 

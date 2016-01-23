@@ -1,71 +1,71 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Microsoft.AspNet.Mvc;
-
 using LinqToTwitter;
+using Microsoft.AspNet.Mvc;
 using Microsoft.Extensions.OptionsModel;
 
 namespace MarkovTweet.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly string consumerKey;
-        private readonly string consumerSecret;
-        private readonly string accessToken;
-        private readonly string accessTokenSecret;
+        private readonly string _accessToken;
+        private readonly string _accessTokenSecret;
+        private readonly string _consumerKey;
+        private readonly string _consumerSecret;
 
         public HomeController(IOptions<TwitterAuth> authOptions)
         {
-            consumerKey = authOptions.Value.ConsumerKey;
-            consumerSecret = authOptions.Value.ConsumerSecret;
-            accessToken = authOptions.Value.AccessToken;
-            accessTokenSecret = authOptions.Value.AccessTokenSecret;
+            _consumerKey = authOptions.Value.ConsumerKey;
+            _consumerSecret = authOptions.Value.ConsumerSecret;
+            _accessToken = authOptions.Value.AccessToken;
+            _accessTokenSecret = authOptions.Value.AccessTokenSecret;
         }
 
-        public IActionResult Index(string screenname)
+        public IActionResult Index(string screenname, string order)
         {
-            int markovOrder = 2;
-            int tweetCount = 100;
+            int markovOrder;
+            // default order is 2, if the parse failed
+            if (!int.TryParse(order, out markovOrder))
+                markovOrder = 2;
+
+            int tweetCount = 200;
             var generator = new MarkovGenerator(markovOrder);
-            
+
             ViewData["Screenname"] = screenname;
-            
-            // read from secrets.json
+
             var auth = new SingleUserAuthorizer
             {
                 CredentialStore = new SingleUserInMemoryCredentialStore
                 {
-                    ConsumerKey = consumerKey,
-                    ConsumerSecret = consumerSecret,
-                    AccessToken = accessToken,
-                    AccessTokenSecret = accessTokenSecret
+                    ConsumerKey = _consumerKey,
+                    ConsumerSecret = _consumerSecret,
+                    AccessToken = _accessToken,
+                    AccessTokenSecret = _accessTokenSecret
                 }
             };
 
             var twitterCtx = new TwitterContext(auth);
             var timeline =
-                (from tweet in twitterCtx.Status
-                    where tweet.Type == StatusType.User &&
-                          tweet.ScreenName == screenname &&
-                          tweet.Count == tweetCount
-                    select tweet)
+                (twitterCtx.Status.Where(tweet => tweet.Type == StatusType.User &&
+                                                  tweet.ScreenName == screenname &&
+                                                  tweet.Count == tweetCount))
                     .ToList();
-          
+
             foreach (var tweet in timeline)
             {
                 generator.ReadInput(tweet.Text);
             }
 
-            int outputCount = 10;
-            List<string> outputList = new List<string>();
+            int outputCount = 20;
+            var outputList = new List<string>();
             for (int i = 0; i < outputCount; i++)
             {
                 outputList.Add(generator.GenerateOutput());
             }
-            
+
             return View(outputList);
         }
-
+        
         public IActionResult About()
         {
             ViewData["Message"] = "Your application description page.";
