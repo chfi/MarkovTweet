@@ -33,7 +33,15 @@ namespace MarkovTweet.Controllers
             if (markovOrder > 5)
                 markovOrder = 5;
             int tweetCount = 200;
-            var generator = new MarkovGenerator(markovOrder);
+            var generator = new MarkovGenerator(markovOrder, false);
+            
+            // how to handle hashtags? just keep a list of them along with a probability for each,
+            // i.e. a single-prefix markov chain?
+            // would also need a no-hashtag probability
+            // no, that won't work, since there wouldn't be an end point, really. at least not one that makes sense.
+            
+            // what might work is keeping track of individual hashtag probabilities,
+            // as well as a probability distribution of number of hashtags. (fun to get some stats on that, see if it's poisson-distributed)
 
             ViewData["Screenname"] = screenname;
 
@@ -67,6 +75,8 @@ namespace MarkovTweet.Controllers
                 outputList.Add(generator.GenerateOutput());
             }
 
+            //TODO add form
+            //TODO use form data
             return View(outputList);
         }
         
