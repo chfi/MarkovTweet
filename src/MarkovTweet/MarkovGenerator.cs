@@ -7,20 +7,39 @@ namespace MarkovTweet
 {
     class MarkovGenerator
     {
-        // TODO make prefixes case insensitive, or at least add an option for it
-
         // the size of the prefix
         private int order;
         // A prefix is a set of n words, where n = the order of the generator.
         // A suffix is a single word, but a prefix can have an arbitrary number of suffixes.
         private Dictionary<List<string>, List<string>> prefixes;
         private Random rng;
+        private bool caseSensitive;
 
-        public MarkovGenerator(int order)
+        public MarkovGenerator(int order, bool caseSensitive)
         {
             this.order = order;
             this.prefixes = new Dictionary<List<string>, List<string>>(comparer: new PrefixComparer());
             this.rng = new Random();
+            this.caseSensitive = caseSensitive;
+        }
+
+        // returns the prefix with each member set to all lower case if the generator is in case-insensitive mode
+        // (prefix case-sensitivity should be a monad.)
+        private List<string> FixPrefixCase(List<string> prefix)
+        {
+            if (caseSensitive)
+            {
+                return prefix;
+            }
+            else
+            {
+                var lowerPrefix = new List<string>();
+                foreach (string s in prefix)
+                {
+                    lowerPrefix.Add(s.ToLower());
+                }
+                return lowerPrefix;
+            }
         }
 
         private class PrefixComparer : IEqualityComparer<List<string>>
@@ -73,14 +92,17 @@ namespace MarkovTweet
             }
         }
 
+        /*
         private void AddPrefixSuffixPair(List<string> prefix, string suffix)
         {
             if (prefix.Count != order)
             {
                 throw new ArgumentException("Prefix is of wrong size: Markov chain is order " + order + ", prefix length is " + prefix.Count);
             }
-            prefixes[prefix].Add(suffix);
+            var fixedPrefix = FixPrefixCase(prefix);
+            prefixes[fixedPrefix].Add(suffix);
         }
+        */
 
         private String GetSuffix(List<string> prefix)
         {
@@ -89,11 +111,16 @@ namespace MarkovTweet
                 throw new ArgumentException("Prefix is of wrong size: Markov chain is order " + order + ", prefix length is " + prefix.Count);
             }
             // TODO fix null pointer exception occasionally thrown here
-            var curPrefix = prefixes[prefix];
+            // Why would there ever exist a prefix without a suffix?
+            // something could have gone wrong when initially adding the prefix,
+            // or when initially adding the suffix,
+            // or the prefix given to this method is wrong, somehow.
+            var fixedPrefix = FixPrefixCase(prefix);
+            var curPrefix = prefixes[fixedPrefix];
 
             int index = rng.Next(curPrefix.Count);
 
-            return prefixes[prefix][index];
+            return prefixes[fixedPrefix][index];
         }
 
         public void ReadInput(string input)
@@ -108,7 +135,7 @@ namespace MarkovTweet
             words.Add("");
 
             // fill the current prefix so we have something to start with
-            List<string> curPrefix = words.Take(order).ToList();
+            List<string> curPrefix = FixPrefixCase((words.Take(order).ToList()));
 
             // now we step through each word, adding it to the suffix-list of the current prefix,
             // then updating the prefix, "shifting" it along the input text
@@ -136,7 +163,7 @@ namespace MarkovTweet
                 newPrefix.AddRange(curPrefix);
                 newPrefix.Add(word);
                 newPrefix.RemoveAt(0);
-                curPrefix = newPrefix;
+                curPrefix = FixPrefixCase(newPrefix);
             }
         }
 
